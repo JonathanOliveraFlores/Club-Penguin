@@ -1,0 +1,86 @@
+---
+title: "Student Exam Results Project"
+subtitle: "Diplomado de métodos matemáticos y estadísticos para la Ciencia de Datos"
+
+author:
+  - name: "Equipo 7"
+  - name: "Integrantes:"
+  - name: "Fajardo Zavala Yendali Viridiana"
+  - name: "González Rivas José Rafael"
+  - name: "Maldonado Zamora Silvia Viridiana"
+  - name: "Olivera Flores Jonathan"
+  - name: "Valencia Quiroz Luis Roberto"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+---
+
+# Descripción
+
+El conjunto de datos proporciona resultados de exámenes para 1000 estudiantes. Los datos registran las puntuaciones individuales en seis asignaturas principales, la puntuación total acumulada, y la clasificación final del estudiante (indicando si aprobó/suspendió y la división académica obtenida). Es un conjunto de datos ideal para analizar el rendimiento y la distribución de las calificaciones académicas.
+
+# Formato
+
+Es un data frame con 1000 observaciones (filas) y las siguientes 9 variables (columnas):
+
+* **Hindi:** Puntuación obtenida por el estudiante en la asignatura de Hindi. (vector numérico)
+
+* **English:** Puntuación obtenida en la asignatura de Inglés. (vector numérico)
+
+* **Science:** Puntuación obtenida en la asignatura de Ciencias. (vector numérico)
+
+* **Maths:** Puntuación obtenida en la asignatura de Matemáticas. (vector numérico)
+
+* **History:** Puntuación obtenida en la asignatura de Historia. (vector numérico)
+
+* **Geograpgy:** Puntuación obtenida en la asignatura de Geografía. (vector numérico)
+
+* **Total:** Puntuación total combinada, que es la suma de las puntuaciones de las seis asignaturas. (vector numérico)
+
+* **Results:** Resultado final del examen, codificado como 1 (Aprobado) o 0 (Suspendido). (vector de enteros)
+
+* **Div:** Clasificación de la división académica o grado obtenido, codificada con valores de 0 a 3. (vector de enteros)
+
+
+```{r setup, include = FALSE}
+
+library(tidyverse)
+library(tidymodels)
+library(embed)
+library(corrr)
+library(tidytext)
+library(gradethis)
+library(sortable)
+library(learntidymodels)
+library(rstatix)
+library(broom)
+
+library(plotly)
+library(GGally)
+library(tidyr)
+library(FactoMineR)  
+library(factoextra)
+library(ggord)
+```
+
+# Carga de Datos
+```{r, echo = TRUE}
+
+df<-read.csv("Student_Exam_Results.csv")
+
+df %>% dim()
+
+df %>% glimpse()
+
+df %>% head()
+
+df %>% summary()
+
+# Valores faltantes
+
+colSums(is.na(df))
+
+```
+
+
