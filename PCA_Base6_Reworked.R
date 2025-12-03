@@ -8,7 +8,7 @@
 #otras), resultado y division. El resultado puede ser aprobado (1) 
 #o reprobado (0). La division puede ser 0, 1, 2 y 3
 install.packages("ggcorrplot")
-
+install.packages("here")
 
 library(learnr)
 library(tidyverse)

@@ -1,0 +1,370 @@
+---
+title: "Student Exam Results – PCA Analysis"
+author: "Rafa"
+date: "`r Sys.Date()`"
+output: pdf_document
+
+---
+
+# Descripción
+
+La base **Student_Exam_Results.csv** contiene calificaciones de exámenes de 1000 estudiantes en seis asignaturas.  
+Incluye tres columnas adicionales:
+
+- **Total** (suma de todas las calificaciones, debe eliminarse)
+- **Results**: 0 = no aprobado, 1 = aprobado  
+- **Div**: categorías 0, 1, 2, 3 (significado no claro)
+
+---
+
+# Librerías
+
+```{r setup, message=FALSE, warning=FALSE}
+#library(learnr)
+library(tidyverse)
+library(tidymodels)
+library(embed)
+library(ggcorrplot)
+library(corrr)
+library(tidytext)
+#library(gradethis)
+library(psych)
+#library(sortable)
+#library(learntidymodels)
+library(rstatix)
+library(broom)
+library(rgl)
+library(plotly)
+library(GGally)
+library(tidyr)
+library(FactoMineR)  
+library(factoextra)
+library(ggord)
+
+theme_set(theme_bw(16))
+```
+
+---
+
+# Importación de Datos
+
+```{r}
+df <- read.csv("C:/Users/usuario/OneDrive/Desktop/Proyecto 2 Diplomado/Student_Results/Student_Exam_Results.csv")
+
+dim(df)
+glimpse(df)
+head(df)
+```
+
+---
+
+# Preparación de Datos
+
+## Selección de columnas relevantes
+
+```{r}
+df1 <- df[,1:9]
+head(df1)
+```
+
+## Valores faltantes
+
+```{r}
+colSums(is.na(df1))
+summary(df1)
+```
+
+## Eliminación de la columna Total
+
+```{r}
+df1 <- df1 %>% select(-Total)
+```
+
+## Conversión a factores
+
+```{r}
+df1 <- df1 %>% 
+  mutate(
+    Results = as.factor(Results),
+    Div = as.factor(Div)
+  )
+
+count(df1, Results)
+count(df1, Div)
+```
+
+---
+
+# Distribuciones de variables objetivo
+
+## Distribución de Results
+
+```{r}
+df1 %>%
+  group_by(Results) %>%
+  summarise(n = n()) %>%
+  mutate(prop = n / sum(n)) %>%
+  ggplot(aes(x = Results, y = n)) +
+  geom_col(fill = c("#CC0033", "#e319dc")) +
+  geom_text(
+    aes(label = paste0(n, " | ", signif(prop * 100, digits = 4), "%")),
+    nudge_y = 10
+  ) +
+  ggtitle("Distribución de Resultados (No Aprobado vs Aprobado)") +
+  theme_gray()
+```
+
+## Distribución de Div
+
+```{r}
+df1 %>%
+  group_by(Div) %>%
+  summarise(n = n()) %>%
+  mutate(prop = n / sum(n)) %>%
+  ggplot(aes(x = Div, y = n)) +
+  geom_col(fill = c("#CC0033", "#e319dc", "#33b9ff", "#33ff66")) +
+  geom_text(
+    aes(label = paste0(n, " | ", signif(prop * 100, digits = 4), "%")),
+    nudge_y = 10
+  ) +
+  ggtitle("Distribución de Divisiones (0, 1, 2, 3)") +
+  theme_gray()
+```
+
+---
+
+# Análisis Exploratorio
+
+## Medias de variables numéricas
+
+```{r}
+df1 %>%
+  select(where(is.numeric)) %>%
+  colMeans()
+```
+
+---
+
+# Histogramas por variable
+
+```{r}
+df1 %>% 
+  pivot_longer(
+    cols = !c(Results, Div),
+    names_to = "Variable",
+    values_to = "Score"
+  ) %>%
+  ggplot(aes(x = Score)) +
+  geom_histogram(aes(y = ..density..), bins = 20,
+                 colour = "black", fill = "darkmagenta") +
+  facet_wrap(~ Variable, ncol = 4, scales = "free") +
+  theme_minimal()
+```
+
+---
+
+# Boxplots por variable
+
+```{r}
+df1 %>% 
+  pivot_longer(
+    cols = !c(Results, Div),
+    names_to = "Variable",
+    values_to = "Score"
+  ) %>%
+  ggplot(aes(y = Score)) +
+  geom_boxplot(fill = "darkred", color = "black") +
+  facet_wrap(~ Variable, ncol = 4, scales = "free") +
+  theme_minimal()
+```
+
+---
+
+# Gráficas de densidad
+
+## Por Results
+
+```{r}
+df1 %>% 
+  pivot_longer(cols = !c(Results, Div), names_to = "Variable", values_to = "Score") %>%
+  ggplot(aes(x = Score, fill = factor(Results))) +
+  geom_density(alpha = 0.4, colour = NA) +
+  facet_wrap(~ Variable, ncol = 4, scales = "free") +
+  scale_fill_manual(values = c("0"="darkred","1"="steelblue")) +
+  theme_minimal()
+```
+
+## Por Div
+
+```{r}
+df1 %>% 
+  pivot_longer(cols = !c(Results, Div), names_to = "Variable", values_to = "Score") %>%
+  ggplot(aes(x = Score, fill = factor(Div))) +
+  geom_density(alpha = 0.4, colour = NA) +
+  facet_wrap(~ Variable, ncol = 4, scales = "free") +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal()
+```
+
+---
+
+# Comparación por variable de respuesta (Results)
+
+```{r}
+df1_long <- df1 %>% 
+  pivot_longer(cols = !c(Results, Div), names_to = "predictores", values_to = "values")
+```
+
+## Boxplots
+
+```{r}
+df1_long %>% 
+  ggplot(aes(x = Results, y = values, fill = predictores)) +
+  geom_boxplot() + 
+  facet_wrap(~ predictores, scales = "free", ncol = 4) +
+  theme(legend.position = "none") +
+  labs(title = "Comparación vía box-plot")
+```
+
+## Histogramas
+
+```{r}
+df1_long %>% 
+  ggplot(aes(values, fill = Results)) +
+  geom_histogram(color = "white") +
+  facet_wrap(~ predictores, scales = "free", ncol=4) +
+  theme_light() +
+  labs(title = "Comparación vía histograma")
+```
+
+## Densidad
+
+```{r}
+df1_long %>% 
+  ggplot(aes(values, fill = Results)) +
+  geom_density(color = "white") +
+  facet_wrap(~ predictores, scales = "free", ncol=4) +
+  theme_light() +
+  labs(title = "Comparación a través de densidad")
+```
+
+---
+
+# Matriz de correlación
+
+```{r}
+grades_corr <- df1 %>% 
+  select(-Results, -Div) %>% 
+  correlate(method = "spearman")
+
+grades_corr
+```
+
+## Correlation matrix (base R)
+
+```{r}
+corr_stg <- cor(df1[, -c(7, 8)], method = "spearman")
+corr_stg
+```
+
+```{r}
+ggcorrplot::ggcorrplot(corr = corr_stg,
+                       type = "lower",
+                       show.diag = TRUE,
+                       lab = TRUE)
+```
+
+## Determinante
+
+```{r}
+det(corr_stg)
+```
+
+## KMO
+
+```{r}
+psych::KMO(corr_stg)
+```
+
+## Test de Bartlett
+
+```{r}
+psych::cortest.bartlett(corr_stg, n = dim(df1)[1])
+```
+
+---
+
+# Preparación para PCA
+
+```{r}
+pca_recipe <- recipe(~., data = df1) %>% 
+  update_role(Results, new_role = "id") %>% 
+  update_role(Div, new_role = "id") %>% 
+  step_dummy(all_nominal_predictors()) %>%  
+  step_normalize(all_predictors()) %>%
+  step_pca(all_numeric_predictors(), threshold = 0.80, id="pca")
+
+pca_recipe
+```
+
+---
+
+# Ejecución del PCA
+
+```{r}
+stg_pca <- prep(pca_recipe)
+```
+
+## Loadings
+
+```{r}
+pca_loading <- tidy(stg_pca, id="pca")
+pca_loading
+```
+
+## Varianzas
+
+```{r}
+pca_variances <- tidy(stg_pca, id="pca", type="variance")
+pca_variances
+```
+
+---
+
+# Scree plots
+
+## % de varianza por componente
+
+```{r}
+stg_pca %>% 
+  tidy(id="pca", type="variance") %>% 
+  filter(terms == "percent variance") %>%
+  ggplot(aes(x = component, y = value)) +
+  geom_col(fill="#B53389") +
+  geom_point(size=3) +
+  geom_line(color="darkblue", size=1.1) +
+  labs(x="PC", y="% de varianza", title="Scree Plot")
+```
+
+## % acumulado de varianza
+
+```{r}
+stg_pca %>% 
+  tidy(id="pca", type="variance") %>% 
+  filter(terms == "cumulative percent variance") %>%
+  ggplot(aes(x = component, y = value)) +
+  geom_col(fill="#F25E52") +
+  geom_point(size=3) +
+  geom_line(color="darkblue", size=1.1) +
+  labs(x="PC", y="% acumulado", title="Scree Plot Acumulado")
+```
+
+---
+
+# Conclusiones
+
+- Solo se retiene alrededor del **85%** de la información con 5 componentes.
+- La correlación entre variables es **muy baja**, por lo que PCA no es la mejor técnica, pero se realizó por motivos de práctica.
+
+---
+
