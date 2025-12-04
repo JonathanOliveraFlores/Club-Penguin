@@ -1,0 +1,141 @@
+---
+title: "Análisis Student Exam Results"
+author: "Yendali"
+date: "2025-12-04"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: '3'
+  html_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+---
+
+# Introducción
+
+El presente análisis explora el dataset *Student Exam Results*, el cual contiene información de **1000 estudiantes** y sus calificaciones en seis materias:
+
+-   Hindi\
+-   English\
+-   Science\
+-   Maths\
+-   History\
+-   Geograpgy
+
+Además, incluye tres columnas adicionales:
+
+-   **Total**: suma de las seis materias (se elimina por ser redundante)\
+-   **Results**: 0 = reprobado, 1 = aprobado\
+-   **Div**: categorías académicas 0 a 3
+
+El propósito es realizar:
+
+-   Exploración descriptiva\
+-   Visualización\
+-   Análisis de correlación\
+-   Análisis de Componentes Principales (PCA)
+
+------------------------------------------------------------------------
+
+# Carga de Librerías y Datos
+
+```{r}
+library(tidyverse)
+library(ggcorrplot)
+library(factoextra)
+
+df <- read.csv("Student_Exam_Results.csv")
+```
+
+------------------------------------------------------------------------
+
+# Limpieza del Dataset
+
+Se elimina la columna Total y se convierten a factor las variables categóricas.
+
+```{r}
+df1 <- df %>%
+  select(-Total) %>%
+  mutate(
+    Results = as.factor(Results),
+    Div = as.factor(Div)
+  )
+summary(df1)
+```
+
+------------------------------------------------------------------------
+
+# Distribución de Calificaciones por Materia
+
+A continuación, se visualizan los histogramas de cada materia para observar su dispersión.
+
+```{r, fig.width=8, fig.height=6}
+materias <- c("Hindi", "English", "Science", "Maths", "History", "Geograpgy")
+
+df1 %>%
+  pivot_longer(cols = materias, names_to = "Materia", values_to = "Score") %>%
+  ggplot(aes(x = Score)) +
+  geom_histogram(bins = 20, fill="grey70", color="black") +
+  facet_wrap(~Materia, scales="free") +
+  labs(title = "Distribución de Calificaciones por Materia")
+```
+
+------------------------------------------------------------------------
+
+# Boxplots por Materia
+
+```{r, fig.width=8, fig.height=6}
+df1 %>%
+  pivot_longer(cols = materias, names_to = "Materia", values_to = "Score") %>%
+  ggplot(aes(x = Materia, y = Score)) +
+  geom_boxplot() +
+  labs(title = "Boxplots de Calificaciones por Materia")
+```
+
+------------------------------------------------------------------------
+
+# Matriz de Correlación
+
+```{r, fig.width=6, fig.height=5}
+corr_mat <- cor(df1[materias], method = "spearman")
+ggcorrplot(corr_mat, type = "lower", lab = TRUE)
+```
+
+Las correlaciones entre materias son bajas, lo que indica que el desempeño en una materia no predice fuertemente el desempeño en otra.
+
+------------------------------------------------------------------------
+
+# Análisis PCA
+
+Las materias se estandarizan antes de aplicar PCA.
+
+```{r}
+materias_scaled <- scale(df1[materias])
+pca_res <- prcomp(materias_scaled, center = TRUE, scale. = TRUE)
+summary(pca_res)
+```
+
+------------------------------------------------------------------------
+
+# Scree Plot
+
+```{r, fig.width=6, fig.height=5}
+fviz_eig(pca_res, addlabels = TRUE)
+```
+
+------------------------------------------------------------------------
+
+# Biplot de Variables
+
+```{r, fig.width=7, fig.height=6}
+fviz_pca_var(pca_res, repel = TRUE, col.var = "red")
+```
+
+------------------------------------------------------------------------
+
+# Conclusiones
+
+-   Las materias presentan correlación baja, lo que limita la capacidad de PCA para reducir la dimensión del dataset.\
+-   Las dos primeras componentes principales explican alrededor del 35% de la varianza total.\
+-   El PCA funciona como herramienta exploratoria, pero no logra resumir eficientemente la información de las seis materias.\
