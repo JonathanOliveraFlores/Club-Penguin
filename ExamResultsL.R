@@ -21,7 +21,7 @@
 
 #Geograpgy: geography class score
 
-#Total: sum of scores
+#Total: scores sum
 
 
 
@@ -328,6 +328,7 @@ fig <- fig %>% layout(scene = list(xaxis = list(title = 'PC1'),
                      zaxis = list(title = 'PC3')))
 
 fig
+
 
 
 
