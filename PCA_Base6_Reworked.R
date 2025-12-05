@@ -342,7 +342,7 @@ VE <- paste("Varianza explicada por dos componentes:"
             ,round(variance_exp$value[[1]]+variance_exp$value[[2]], digits = 2),"%")
 VE
 
-datos_pca<-bake(wdbc_pca, new_data = NULL)
+datos_pca<-bake(stg_pca, new_data = NULL)
 datos_pca
 
 datos_pca %>%
@@ -350,24 +350,24 @@ datos_pca %>%
   geom_point()+
   labs(x = paste0("PC1: ",round(variance_exp$value[[1]],2), "%"),
        y = paste0("PC2: ",round(variance_exp$value[[2]],2), "%"))+
-  ggtitle(paste0("WDBC: Gráfica de componentes principales","\n",VE))
+  ggtitle(paste0("STDTGR: Gráfica de componentes principales","\n",VE))
 
 datos_pca %>%
-  ggplot(aes(x = PC1, y = PC2,color = factor(diagnosis)))+
+  ggplot(aes(x = PC1, y = PC2,color = factor(Results)))+
   geom_point()+
   labs(x = paste0("PC1: ",round(variance_exp$value[[1]],2), "%"),
        y = paste0("PC2: ",round(variance_exp$value[[2]],2), "%"))+
-  ggtitle(paste0("WDBC: Gráfica de componentes principales","\n",VE))
+  ggtitle(paste0("STDTGR: Gráfica de componentes principales","\n",VE))
 
-juice(wdbc_pca) %>%
-  ggplot(aes(PC1, PC2, label = diagnosis)) +
-  geom_point(aes(color = diagnosis), alpha = 0.9, size = 2) +
+juice(stg_pca) %>%
+  ggplot(aes(PC1, PC2, label = Results)) +
+  geom_point(aes(color = Results), alpha = 0.9, size = 2) +
   geom_text(check_overlap = TRUE, hjust = "inward", family = "IBMPlexSans") +
   labs(color = NULL)
 
 ###Componentes
 
-wdbc_pca %>%
+stg_pca %>%
   tidy(id = "pca") %>% 
   mutate(terms = tidytext::reorder_within(terms, 
                                           abs(value), 
@@ -383,7 +383,7 @@ wdbc_pca %>%
   ) 
 
 
-wdbc_pca %>%
+stg_pca %>%
   tidy(id = "pca") %>%
   filter(component %in% paste0("PC", 1:3)) %>%
   mutate(component = fct_inorder(component)) %>%
@@ -398,12 +398,12 @@ wdbc_pca %>%
 
 plot3d( 
   x=datos_pca$PC1, y=datos_pca$PC2, z=datos_pca$PC3, 
-  col = as.numeric(datos_pca$diagnosis), 
+  col = as.numeric(datos_pca$Results), 
   type = 's', 
   radius = .1,
   xlab="PC1", ylab="PC2", zlab="PC3")
 
-g.df1 <- plot_ly(datos_pca, x = ~PC1, y = ~PC2, z = ~PC3, color = ~diagnosis, colors =c("#0000FF", "#FF00FF") )
+g.df1 <- plot_ly(datos_pca, x = ~PC1, y = ~PC2, z = ~PC3, color = ~Results, colors =c("#0000FF", "#FF00FF") )
 g.df1 <- g.df1 %>% add_markers()
 g.df1 <- g.df1 %>% layout(scene = list(xaxis = list(title = 'PC1'),
                                        yaxis = list(title = 'PC2'),

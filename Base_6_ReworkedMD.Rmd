@@ -1,8 +1,18 @@
 ---
 title: "Student Exam Results – PCA Analysis"
-author: "Rafa"
+author: |
+  Equipo 7  
+  Integrantes:  
+  Fajardo Zavala Yendali Viridiana  
+  González Rivas José Rafael  
+  Maldonado Zamora Silvia Viridiana  
+  Olivera Flores Jonathan  
+  Valencia Quiroz Luis Roberto
+
 date: "`r Sys.Date()`"
-output: pdf_document
+output:
+  pdf_document:
+    latex_engine: xelatex
 
 ---
 
@@ -359,6 +369,29 @@ stg_pca %>%
   labs(x="PC", y="% acumulado", title="Scree Plot Acumulado")
 ```
 
+## Varianza con 2 variables solamente
+
+```{r}
+variance_exp <- tidy(stg_pca,id = "pca", type = "variance")%>%
+  filter(str_detect(terms, "percent variance"))
+variance_exp
+```
+
+## Plot con solo 2 variables
+
+```{r}
+datos_pca<-bake(stg_pca, new_data = NULL)
+datos_pca
+```
+
+```{r}
+datos_pca %>%
+  ggplot(aes(x = PC1, y = PC2))+
+  geom_point()+
+  labs(x = paste0("PC1: ",round(variance_exp$value[[1]],2), "%"),
+       y = paste0("PC2: ",round(variance_exp$value[[2]],2), "%"))+
+  ggtitle(paste0("STDTGR: Gráfica de componentes principales","\n",VE))
+```
 ---
 
 # Conclusiones
